@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Shopping_Cart.DTOS;
 using Shopping_Cart.Models;
 
 namespace Shopping_Cart.Controllers
@@ -57,7 +58,7 @@ namespace Shopping_Cart.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Image,Email,PhoneNo,Cnic,Address,Role,Status,SystemUserId,CreatedBy,CreatedDate,ModifiedBy,ModifiedDate")] User user, IFormFile?Image)
+        public async Task<IActionResult> Create(UsersLogin login,User user, IFormFile?Image)
         {
             var ImagePath = "/imgs/" + Guid.NewGuid().ToString() + Path.GetExtension(Image.FileName);
             using (FileStream dd = new FileStream(_webHostEnvironment.WebRootPath + ImagePath, FileMode.Create))
@@ -65,6 +66,21 @@ namespace Shopping_Cart.Controllers
                 Image.CopyTo(dd);
             }
             user.Image += "" + ImagePath;
+
+            SystemUser system = new SystemUser();
+            system.Username = login.UserName;
+            system.Password = login.Password;
+            _context.SystemUsers.Add(system);
+            _context.SaveChanges();
+
+            User user1 = new User();
+            user1.Name = login.Name;
+            user1.Email = login.Email;
+            user1.Address = login.Address;
+            user1.PhoneNo = login.PhoneNo;
+            user1.Role = login.Role;
+            user1.Cnic = login.Cnic;
+            user1.Status = login.Status;
             if (ModelState.IsValid)
             {
                 _context.Add(user);
@@ -166,5 +182,11 @@ namespace Shopping_Cart.Controllers
         {
           return (_context.Users?.Any(e => e.Id == id)).GetValueOrDefault();
         }
+        [HttpGet]
+        public IActionResult Login()
+        {
+            return View();
+        }
+
     }
 }
